@@ -98,13 +98,19 @@ export default function App() {
 
   return (
     <main className="mx-auto max-w-6xl space-y-5 p-4 md:p-8">
-      <header className="flex flex-wrap items-center justify-between gap-5 rounded-2xl bg-cover bg-center p-8 text-white shadow-lg print:hidden md:px-10"
-        style={{ backgroundImage: 'linear-gradient(rgba(15,23,42,.75),rgba(15,23,42,.88)), url(/foto_kelas.jpeg)' }}>
-        <div>
-          <h1 className="text-2xl font-bold">Rekap uang kas kelas</h1>
-          <p className="mt-1 text-sm text-slate-300">Kelola iuran, cek status pembayaran, dan unduh laporan mingguan.</p>
-        </div>
-      </header>
+      <header className="flex flex-col-reverse items-center gap-6 overflow-hidden rounded-2xl bg-slate-900 p-6 text-white shadow-lg print:hidden md:flex-row md:justify-between md:px-10">
+  <div className="md:max-w-md">
+    <h1 className="text-2xl font-bold md:text-3xl">Rekap uang kas kelas</h1>
+    <p className="mt-2 text-sm text-slate-300">
+      Kelola iuran, cek status pembayaran, dan unduh laporan mingguan.
+    </p>
+  </div>
+  <img
+    src="/foto_kelas.jpeg"
+    alt="Foto bersama kelas di tangga gedung"
+    className="h-64 w-auto rounded-xl object-contain md:h-80"
+  />
+</header>
 
       {error && (
         <div role="alert" className="flex items-center justify-between gap-3 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800 print:hidden">
