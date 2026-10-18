@@ -13,7 +13,7 @@ Awalnya aplikasi ini kubuat memakai PHP dan MySQL (jalan di XAMPP). Lalu kuubah 
 - **Kelola siswa.** Tambah satu per satu, edit nama langsung di tabel, atau hapus.
 - **Impor banyak siswa sekaligus.** Tempel daftar nama (satu baris, satu nama), maksimal 200 nama sekali impor.
 - **Cari nama siswa** dengan pencarian langsung.
-- **Unduh Excel (CSV) dan cetak / simpan PDF** untuk laporan per periode.
+- **Unduh Excel (.xlsx) dan cetak / simpan PDF** untuk laporan per periode. File Excel dibuat langsung di browser, kolomnya rapi dan tidak terpengaruh pengaturan wilayah Excel.
 - **Responsif.** Di laptop tampil sebagai tabel, di HP berubah jadi kartu per siswa.
 - **Tanpa reload halaman.** Semua aksi berjalan lewat API, lengkap dengan indikator loading dan pesan error yang jelas.
 
@@ -47,6 +47,7 @@ kas-kelas/
     ├── src/
     │   ├── App.jsx           # state utama dan alur data
     │   ├── api.js            # semua pemanggilan ke backend
+    │   ├── xlsx.js           # pembuat file .xlsx tanpa library tambahan
     │   ├── components/       # CardSummary, TableRekap, FormTambah, dst.
     │   └── hooks/            # useAction (cegah klik ganda), useDebounce
     ├── vercel.json           # supaya refresh halaman tidak 404
@@ -180,7 +181,7 @@ Semua endpoint diawali `/api` dan mengembalikan JSON. Yang publik hanya `health`
 - **Helmet** dan **rate limit** (120 permintaan per menit per IP).
 - **Error aman.** Detail error database hanya masuk log server. Pengguna hanya melihat pesan ramah seperti "Terjadi kesalahan pada server".
 - **RLS aktif** di semua tabel tanpa policy, sehingga key publik Supabase tidak bisa membaca atau menulis apa pun. Hanya backend (dengan `service_role`) yang bisa.
-- **Export CSV** dilindungi dari CSV injection (sel berawalan `=`, `+`, `-`, `@` diberi tanda petik).
+- **Export Excel aman dari injeksi rumus.** Semua isi sel disimpan sebagai teks, jadi nama berawalan `=`, `+`, `-`, atau `@` tidak pernah dijalankan sebagai rumus.
 - **Anti klik ganda.** Tombol kirim dinonaktifkan selama request berjalan, sehingga data tidak masuk dua kali.
 
 ## Keterbatasan yang perlu kuketahui
@@ -189,7 +190,6 @@ Semua endpoint diawali `/api` dan mengembalikan JSON. Yang publik hanya `health`
 - **Token disimpan di browser (localStorage)**, jadi di komputer umum jangan lupa klik **Keluar**.
 - **Belum ada pencatatan kas keluar.** Aplikasi baru mencatat iuran yang masuk.
 - **Tampilan belum ada halaman per halaman.** Backend sudah mendukung `page` dan `limit`, tapi layar memuat sampai 100 siswa sekaligus, cukup untuk satu kelas.
-- **"Excel" berupa file CSV**, yang bisa dibuka di Excel. Belum berupa `.xlsx` asli.
 - **Kode belum punya tes otomatis.**
 
 ## Kalau ada masalah
@@ -217,6 +217,5 @@ truncate table public.anggota restart identity cascade;
 
 - Akun terpisah per pengurus (misalnya lewat Supabase Auth) kalau pengurusnya lebih dari satu
 - Pencatatan kas keluar dan saldo akhir
-- Export `.xlsx` asli
 - Riwayat pembayaran per siswa lintas periode
 - Halaman per halaman di tabel kalau jumlah siswa bertambah
