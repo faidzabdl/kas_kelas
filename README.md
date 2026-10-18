@@ -1,19 +1,16 @@
 # Rekap Kas Kelas
 
-Website sederhana untuk merekap uang kas kelas. Aku bikin ini supaya urusan "siapa yang sudah bayar minggu ini?" tidak perlu lagi dicatat di kertas atau ditanyakan satu-satu lewat grup chat. Buka website, lihat daftar siswa, tandai yang sudah bayar, dan total kas langsung terhitung.
-
-Awalnya aplikasi ini kubuat memakai PHP dan MySQL (jalan di XAMPP). Lalu kuubah total menjadi **REST API + SPA** supaya bisa di-hosting online dan dibuka dari HP siapa saja.
+Website sederhana untuk merekap uang kas kelas. kami membuat projek ini supaya urusan "siapa yang sudah bayar minggu ini?" tidak perlu lagi dicatat di kertas atau ditanyakan satu-satu lewat grup chat. Buka website, lihat daftar siswa, tandai yang sudah bayar, dan total kas langsung terhitung.
 
 ## Yang bisa dilakukan aplikasi ini
 
-- **Periode mingguan.** Aku tinggal memilih tanggal mulai, lalu periode otomatis berlaku 7 hari (misalnya 18 Okt 2026 sampai 24 Okt 2026).
+- **Periode mingguan.** tinggal memilih tanggal mulai, lalu periode otomatis berlaku 7 hari (misalnya 18 Okt 2026 sampai 24 Okt 2026).
 - **Tandai sudah/belum bayar** per siswa. Tanggal bayar tercatat otomatis (zona waktu WIB), dan bisa dibatalkan kalau salah klik.
 - **Ringkasan kas.** Menampilkan jumlah yang sudah dan belum bayar, plus total kas terkumpul (iuran Rp 5.000 per anak, bisa diubah lewat environment variable).
 - **Kelola siswa.** Tambah satu per satu, edit nama langsung di tabel, atau hapus.
 - **Impor banyak siswa sekaligus.** Tempel daftar nama (satu baris, satu nama), maksimal 200 nama sekali impor.
 - **Cari nama siswa** dengan pencarian langsung.
 - **Unduh Excel (CSV) dan cetak / simpan PDF** untuk laporan per periode.
-- **Responsif.** Di laptop tampil sebagai tabel, di HP berubah jadi kartu per siswa.
 - **Tanpa reload halaman.** Semua aksi berjalan lewat API, lengkap dengan indikator loading dan pesan error yang jelas.
 
 ## Teknologi yang dipakai
@@ -59,8 +56,6 @@ Ada tiga tabel di Supabase:
 - `anggota`: daftar siswa.
 - `periode_minggu`: daftar periode. Tanggal selesai dihitung otomatis oleh database (tanggal mulai + 6 hari).
 - `rekap_mingguan`: status bayar per siswa per periode.
-
-Satu hal yang sengaja kubuat beda dari versi PHP: dulu setiap halaman dibuka, aplikasi membuatkan baris rekap untuk semua siswa. Sekarang baris rekap baru dibuat **saat siswa ditandai sudah bayar**. Siswa yang belum punya baris rekap otomatis dianggap "Belum Bayar". Jadi siswa baru langsung masuk ke semua periode tanpa proses sinkronisasi, dan datanya tidak membengkak. Kalau siswa atau periode dihapus, rekap terkait ikut terhapus otomatis.
 
 ## Menjalankan di komputer sendiri
 
@@ -165,7 +160,7 @@ Semua endpoint diawali `/api` dan mengembalikan JSON.
 | PATCH | `/api/anggota/:id` | Ubah nama siswa |
 | DELETE | `/api/anggota/:id` | Hapus siswa beserta rekapnya |
 
-## Keamanan yang sudah kupasang
+## Keamanan yang sudah terpasang
 
 - **Validasi semua input** di backend memakai zod: nama 1 sampai 100 karakter, tanggal harus valid, ID harus angka positif, status hanya dua nilai yang diizinkan.
 - **Sanitasi**: tanda `<` dan `>` dibuang dari nama, spasi berlebih dirapikan. Query ke database memakai parameter dari `supabase-js`, jadi tidak rentan SQL injection, dan React otomatis meng-escape teks di tampilan.
@@ -175,14 +170,6 @@ Semua endpoint diawali `/api` dan mengembalikan JSON.
 - **RLS aktif** di semua tabel tanpa policy, sehingga key publik Supabase tidak bisa membaca atau menulis apa pun. Hanya backend (dengan `service_role`) yang bisa.
 - **Export CSV** dilindungi dari CSV injection (sel berawalan `=`, `+`, `-`, `@` diberi tanda petik).
 - **Anti klik ganda.** Tombol kirim dinonaktifkan selama request berjalan, sehingga data tidak masuk dua kali.
-
-## Keterbatasan yang perlu kuketahui
-
-- **Belum ada login.** Siapa pun yang tahu alamat websitenya bisa menandai, mengedit, dan menghapus data. Jadi untuk sekarang jangan menyebarkan link ke sembarang orang. Menambah login admin adalah hal pertama yang akan kukerjakan.
-- **Belum ada pencatatan kas keluar.** Aplikasi baru mencatat iuran yang masuk.
-- **Tampilan belum ada halaman per halaman.** Backend sudah mendukung `page` dan `limit`, tapi layar memuat sampai 100 siswa sekaligus, cukup untuk satu kelas.
-- **"Excel" berupa file CSV**, yang bisa dibuka di Excel. Belum berupa `.xlsx` asli.
-- **Kode belum punya tes otomatis.**
 
 ## Kalau ada masalah
 
@@ -203,10 +190,3 @@ Mengosongkan seluruh data siswa dan rekap (jalankan di Supabase SQL Editor, **ti
 truncate table public.anggota restart identity cascade;
 ```
 
-## Rencana ke depan
-
-- Login admin: orang lain hanya bisa melihat rekap, aksi ubah dan hapus butuh password
-- Pencatatan kas keluar dan saldo akhir
-- Export `.xlsx` asli
-- Riwayat pembayaran per siswa lintas periode
-- Halaman per halaman di tabel kalau jumlah siswa bertambah
