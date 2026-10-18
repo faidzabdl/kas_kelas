@@ -19,7 +19,7 @@ export default function CardSummary({ ringkasan, periodeLabel, loading }) {
   return (
     <Card title="Ringkasan keuangan">
       <p className="text-sm text-slate-600">
-        Periode <b>{periodeLabel}</b> · iuran {rupiah(iuran)} per anak
+        Periode <b>{periodeLabel}</b> · iuran {rupiah(iuran)} per mahasiswa
       </p>
       <div className="mt-3 rounded-lg border border-slate-200 bg-slate-50 px-4 py-3">
         <p className="text-xs text-slate-500">Total kas terkumpul</p>
@@ -30,7 +30,7 @@ export default function CardSummary({ ringkasan, periodeLabel, loading }) {
       </div>
       <p className="mt-2 text-sm">
         <b className="text-emerald-600">{sudah_bayar} sudah bayar</b>
-        <span className="text-slate-400"> dari {total_anggota} siswa, </span>
+        <span className="text-slate-400"> dari {total_anggota} mahasiswa, </span>
         <b className="text-red-500">{belum_bayar} belum</b>
       </p>
     </Card>

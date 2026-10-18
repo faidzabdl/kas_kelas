@@ -12,7 +12,7 @@ export default function FormTambah({ onTambah }) {
     <Card title="Anggota kelas">
       <form onSubmit={(e) => { e.preventDefault(); submit(); }}>
         <label htmlFor="nama" className="mb-1.5 block text-sm font-medium">Tambah siswa baru</label>
-        <div className="flex gap-2">
+        <div className="flex flex-col gap-2 sm:flex-row">
           <input id="nama" required maxLength={100} className={inputCls} placeholder="Nama lengkap siswa" value={nama} onChange={(e) => setNama(e.target.value)} disabled={loading} />
           <Button type="submit" variant="success" loading={loading}>Simpan</Button>
         </div>

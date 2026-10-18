@@ -20,7 +20,7 @@ export default function ExportButtons({ items, periodeLabel, disabled }) {
   };
 
   return (
-    <div className="flex gap-2">
+    <div className="flex flex-wrap gap-2">
       <Button variant="ghost" onClick={excel} disabled={disabled}>Unduh Excel (CSV)</Button>
       <Button variant="ghost" onClick={() => window.print()} disabled={disabled}>Cetak / PDF</Button>
     </div>

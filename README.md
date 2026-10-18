@@ -1,16 +1,20 @@
 # Rekap Kas Kelas
 
-Website sederhana untuk merekap uang kas kelas. kami membuat projek ini supaya urusan "siapa yang sudah bayar minggu ini?" tidak perlu lagi dicatat di kertas atau ditanyakan satu-satu lewat grup chat. Buka website, lihat daftar siswa, tandai yang sudah bayar, dan total kas langsung terhitung.
+Website sederhana untuk merekap uang kas kelas. Aku bikin ini supaya urusan "siapa yang sudah bayar minggu ini?" tidak perlu lagi dicatat di kertas atau ditanyakan satu-satu lewat grup chat. Buka website, lihat daftar siswa, tandai yang sudah bayar, dan total kas langsung terhitung.
+
+Awalnya aplikasi ini kubuat memakai PHP dan MySQL (jalan di XAMPP). Lalu kuubah total menjadi **REST API + SPA** supaya bisa di-hosting online dan dibuka dari HP siapa saja.
 
 ## Yang bisa dilakukan aplikasi ini
 
-- **Periode mingguan.** tinggal memilih tanggal mulai, lalu periode otomatis berlaku 7 hari (misalnya 18 Okt 2026 sampai 24 Okt 2026).
+- **Login admin.** Siapa pun bisa *melihat* rekap, tapi menandai bayar, mengelola siswa, dan mengelola periode hanya bisa setelah login dengan password admin.
+- **Periode mingguan.** Aku tinggal memilih tanggal mulai, lalu periode otomatis berlaku 7 hari (misalnya 18 Okt 2026 sampai 24 Okt 2026).
 - **Tandai sudah/belum bayar** per siswa. Tanggal bayar tercatat otomatis (zona waktu WIB), dan bisa dibatalkan kalau salah klik.
 - **Ringkasan kas.** Menampilkan jumlah yang sudah dan belum bayar, plus total kas terkumpul (iuran Rp 5.000 per anak, bisa diubah lewat environment variable).
 - **Kelola siswa.** Tambah satu per satu, edit nama langsung di tabel, atau hapus.
 - **Impor banyak siswa sekaligus.** Tempel daftar nama (satu baris, satu nama), maksimal 200 nama sekali impor.
 - **Cari nama siswa** dengan pencarian langsung.
 - **Unduh Excel (CSV) dan cetak / simpan PDF** untuk laporan per periode.
+- **Responsif.** Di laptop tampil sebagai tabel, di HP berubah jadi kartu per siswa.
 - **Tanpa reload halaman.** Semua aksi berjalan lewat API, lengkap dengan indikator loading dan pesan error yang jelas.
 
 ## Teknologi yang dipakai
@@ -56,6 +60,8 @@ Ada tiga tabel di Supabase:
 - `anggota`: daftar siswa.
 - `periode_minggu`: daftar periode. Tanggal selesai dihitung otomatis oleh database (tanggal mulai + 6 hari).
 - `rekap_mingguan`: status bayar per siswa per periode.
+
+Satu hal yang sengaja kubuat beda dari versi PHP: dulu setiap halaman dibuka, aplikasi membuatkan baris rekap untuk semua siswa. Sekarang baris rekap baru dibuat **saat siswa ditandai sudah bayar**. Siswa yang belum punya baris rekap otomatis dianggap "Belum Bayar". Jadi siswa baru langsung masuk ke semua periode tanpa proses sinkronisasi, dan datanya tidak membengkak. Kalau siswa atau periode dihapus, rekap terkait ikut terhapus otomatis.
 
 ## Menjalankan di komputer sendiri
 
@@ -110,6 +116,9 @@ File `.env` tidak ikut ke GitHub (sudah ada di `.gitignore`). Yang ikut hanya `.
 | `FRONTEND_URL` | `https://nama-app.vercel.app` | Alamat frontend yang boleh mengakses API. Tanpa garis miring di akhir, boleh beberapa dipisah koma |
 | `NODE_ENV` | `production` | Di mode production, `localhost:5173` tidak diizinkan oleh CORS |
 | `IURAN_MINGGUAN` | `5000` | Nominal iuran per siswa (opsional, default 5000) |
+| `ADMIN_PASSWORD` | password pilihanku | Password login admin, minimal 8 karakter. Server menolak start kalau kosong |
+| `JWT_SECRET` | string acak panjang | Untuk menandatangani token login, minimal 32 karakter. Buat dengan `node -e "console.log(require('crypto').randomBytes(48).toString('hex'))"` |
+| `TOKEN_EXPIRES` | `7d` | Lama sesi login (opsional, default 7 hari) |
 | `PORT` | | Diisi otomatis oleh Railway, tidak perlu dibuat sendiri |
 
 **Frontend (Vercel, atau `frontend/.env` saat lokal)**
@@ -145,11 +154,13 @@ Urutannya penting karena backend dan frontend saling membutuhkan alamat satu sam
 
 ## Daftar endpoint API
 
-Semua endpoint diawali `/api` dan mengembalikan JSON.
+Semua endpoint diawali `/api` dan mengembalikan JSON. Yang publik hanya `health`, `auth/login`, dan dua endpoint GET periode. Sisanya wajib header `Authorization: Bearer <token>`.
 
 | Method | Path | Fungsi |
 |---|---|---|
 | GET | `/api/health` | Cek server hidup |
+| POST | `/api/auth/login` | Login. Body: `{ "password": "..." }`, mengembalikan `{ "token": "..." }` |
+| GET | `/api/auth/me` | Cek token masih valid (admin) |
 | GET | `/api/periode` | Daftar periode (terbaru dulu) |
 | POST | `/api/periode` | Buat periode. Body: `{ "tanggal_mulai": "2026-10-18" }` |
 | DELETE | `/api/periode/:id` | Hapus periode beserta rekapnya |
@@ -160,8 +171,9 @@ Semua endpoint diawali `/api` dan mengembalikan JSON.
 | PATCH | `/api/anggota/:id` | Ubah nama siswa |
 | DELETE | `/api/anggota/:id` | Hapus siswa beserta rekapnya |
 
-## Keamanan yang sudah terpasang
+## Keamanan yang sudah kupasang
 
+- **Login admin dengan token JWT.** Semua endpoint yang mengubah data wajib membawa token. Password dibandingkan dengan `timingSafeEqual`, dan percobaan login gagal dibatasi 8 kali per 15 menit per IP.
 - **Validasi semua input** di backend memakai zod: nama 1 sampai 100 karakter, tanggal harus valid, ID harus angka positif, status hanya dua nilai yang diizinkan.
 - **Sanitasi**: tanda `<` dan `>` dibuang dari nama, spasi berlebih dirapikan. Query ke database memakai parameter dari `supabase-js`, jadi tidak rentan SQL injection, dan React otomatis meng-escape teks di tampilan.
 - **CORS** hanya mengizinkan alamat di `FRONTEND_URL` (plus `localhost:5173` saat bukan production).
@@ -170,6 +182,15 @@ Semua endpoint diawali `/api` dan mengembalikan JSON.
 - **RLS aktif** di semua tabel tanpa policy, sehingga key publik Supabase tidak bisa membaca atau menulis apa pun. Hanya backend (dengan `service_role`) yang bisa.
 - **Export CSV** dilindungi dari CSV injection (sel berawalan `=`, `+`, `-`, `@` diberi tanda petik).
 - **Anti klik ganda.** Tombol kirim dinonaktifkan selama request berjalan, sehingga data tidak masuk dua kali.
+
+## Keterbatasan yang perlu kuketahui
+
+- **Login hanya satu password bersama** untuk admin, belum ada akun per orang. Kalau password bocor, ganti `ADMIN_PASSWORD` (dan `JWT_SECRET` supaya semua sesi lama langsung tidak berlaku) di Railway.
+- **Token disimpan di browser (localStorage)**, jadi di komputer umum jangan lupa klik **Keluar**.
+- **Belum ada pencatatan kas keluar.** Aplikasi baru mencatat iuran yang masuk.
+- **Tampilan belum ada halaman per halaman.** Backend sudah mendukung `page` dan `limit`, tapi layar memuat sampai 100 siswa sekaligus, cukup untuk satu kelas.
+- **"Excel" berupa file CSV**, yang bisa dibuka di Excel. Belum berupa `.xlsx` asli.
+- **Kode belum punya tes otomatis.**
 
 ## Kalau ada masalah
 
@@ -181,7 +202,9 @@ Semua endpoint diawali `/api` dan mengembalikan JSON.
 | "Terjadi kesalahan pada server" | Lihat log backend, cari baris `[supabase] ...`. Biasanya tabel belum dibuat, key salah, atau `SUPABASE_URL` salah |
 | Log backend berisi HTML panjang | `SUPABASE_URL` diisi alamat dashboard Supabase, padahal harus `https://xxxx.supabase.co` |
 | Railway: "could not determine how to build" | Root Directory belum diisi `/backend` |
-| Railway crash saat start | Variabel `SUPABASE_URL` atau `SUPABASE_SERVICE_ROLE_KEY` belum diisi di tab Variables |
+| Railway crash saat start | Variabel `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, `ADMIN_PASSWORD`, atau `JWT_SECRET` belum diisi di tab Variables |
+| "Sesi login habis" padahal baru login | `JWT_SECRET` berubah, atau jam sesi (`TOKEN_EXPIRES`) terlalu pendek. Login ulang |
+| "Terlalu banyak percobaan login" | Salah password 8 kali. Tunggu 15 menit |
 | Website minta login Vercel | Itu Deployment Protection. Pakai domain utama, atau matikan di Settings → Deployment Protection |
 | Nama siswa dobel setelah impor | Impor dijalankan dua kali. Kosongkan dulu dengan perintah di bawah, lalu impor ulang |
 
@@ -190,3 +213,10 @@ Mengosongkan seluruh data siswa dan rekap (jalankan di Supabase SQL Editor, **ti
 truncate table public.anggota restart identity cascade;
 ```
 
+## Rencana ke depan
+
+- Akun terpisah per pengurus (misalnya lewat Supabase Auth) kalau pengurusnya lebih dari satu
+- Pencatatan kas keluar dan saldo akhir
+- Export `.xlsx` asli
+- Riwayat pembayaran per siswa lintas periode
+- Halaman per halaman di tabel kalau jumlah siswa bertambah

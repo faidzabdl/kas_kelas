@@ -23,6 +23,7 @@ const pencarian = z.string().optional().default('')
   .transform((s) => clean(s).replace(/[%_\\,()*]/g, '').slice(0, 50));
 
 export const schemas = {
+  login: { body: z.object({ password: z.string({ required_error: 'Password wajib diisi.' }).min(1, 'Password wajib diisi.').max(200, 'Password terlalu panjang.') }) },
   idParam: { params: z.object({ id }) },
   anggotaBaru: { body: z.object({ nama }) },
   anggotaEdit: { params: z.object({ id }), body: z.object({ nama }) },
